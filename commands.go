@@ -77,3 +77,13 @@ func (c *Connection) Pong(msg string) {
 		Trailing: msg,
 	})
 }
+
+// Quit from the server
+func (c *Connection) Quit() {
+	c.Send(&irc.Message{
+		Command:  irc.QUIT,
+		Trailing: c.QuitMsg,
+	})
+	c.stopped = true
+	c.quit = true
+}
