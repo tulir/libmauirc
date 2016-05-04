@@ -43,6 +43,61 @@ func (c *Connection) Privmsg(channel, msg string) {
 	})
 }
 
+// Notice sends the given message to the given channel as a NOTICE
+func (c *Connection) Notice(channel, msg string) {
+	c.Send(&irc.Message{
+		Command:  irc.NOTICE,
+		Params:   []string{channel},
+		Trailing: msg,
+	})
+}
+
+// Away sets the away message
+func (c *Connection) Away(msg string) {
+	c.Send(&irc.Message{
+		Command:  irc.AWAY,
+		Trailing: msg,
+	})
+}
+
+// RemoveAway removes the away status
+func (c *Connection) RemoveAway() {
+	c.Away("")
+}
+
+// Invite the given user to the given channel
+func (c *Connection) Invite(user, ch string) {
+	c.Send(&irc.Message{
+		Command: irc.INVITE,
+		Params:  []string{user, ch},
+	})
+}
+
+// Kick the given user from the given channel with the given message
+func (c *Connection) Kick(ch, user, msg string) {
+	c.Send(&irc.Message{
+		Command:  irc.KICK,
+		Params:   []string{ch, user},
+		Trailing: msg,
+	})
+}
+
+// Mode changes channel and user modes
+func (c *Connection) Mode(target, flags, args string) {
+	c.Send(&irc.Message{
+		Command: irc.MODE,
+		Params:  []string{target, flags, args},
+	})
+}
+
+// Oper authenticates the user as a server operator
+func (c *Connection) Oper(username, password string) {
+	c.Send(&irc.Message{
+		Command: irc.OPER,
+		Params:  []string{username, password},
+	})
+}
+
 // SendUser sends the USER message to the server
 func (c *Connection) SendUser() {
 	c.Send(&irc.Message{
@@ -117,6 +172,29 @@ func (c *Connection) Whois(name string) {
 		Command: irc.WHOIS,
 		Params:  []string{name},
 	})
+}
+
+// Whowas sends a WHOWAS request on the given name
+func (c *Connection) Whowas(name string) {
+	c.Send(&irc.Message{
+		Command: irc.WHOWAS,
+		Params:  []string{name},
+	})
+}
+
+// Who sends a WHO request with the given name
+func (c *Connection) Who(name string, op bool) {
+	if op {
+		c.Send(&irc.Message{
+			Command: irc.WHOIS,
+			Params:  []string{name, "o"},
+		})
+	} else {
+		c.Send(&irc.Message{
+			Command: irc.WHOIS,
+			Params:  []string{name},
+		})
+	}
 }
 
 // Quit from the server
