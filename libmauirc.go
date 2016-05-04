@@ -39,7 +39,16 @@ type Debugger interface {
 }
 
 // Connection is an IRC connection
-type Connection struct {
+type Connection interface {
+	Debugger
+	HandlerHandler
+	Tunnel
+	Connect() error
+	Disconnect()
+	Connected() bool
+}
+
+type conn struct {
 	sync.WaitGroup
 	PingFreq  time.Duration
 	KeepAlive time.Duration
@@ -69,8 +78,8 @@ type Connection struct {
 }
 
 // Create an IRC connection
-func Create(nick, user string, addr AddressHandler) *Connection {
-	c := &Connection{
+func Create(nick, user string, addr AddressHandler) Connection {
+	c := &conn{
 		Nick:          nick,
 		PreferredNick: nick,
 		User:          user,
@@ -90,7 +99,7 @@ func Create(nick, user string, addr AddressHandler) *Connection {
 }
 
 // Connect to the IRC server
-func (c *Connection) Connect() error {
+func (c *conn) Connect() error {
 	c.stopped = true
 
 	if c.Address == nil {
@@ -136,7 +145,7 @@ func (c *Connection) Connect() error {
 }
 
 // Disconnect from the IRC server
-func (c *Connection) Disconnect() {
+func (c *conn) Disconnect() {
 	if c.end != nil {
 		close(c.end)
 	}
@@ -156,19 +165,19 @@ func (c *Connection) Disconnect() {
 }
 
 // Connected checks if this connection is active
-func (c *Connection) Connected() bool {
+func (c *conn) Connected() bool {
 	return !c.quit && !c.stopped
 }
 
 // Debugf prints a debug message with fmt.Fprintf
-func (c *Connection) Debugf(msg string, args ...interface{}) {
+func (c *conn) Debugf(msg string, args ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintf(c.DebugWriter, msg, args...)
 	}
 }
 
 // Debugfln prints a debug message with fmt.Fprintf and appends \n
-func (c *Connection) Debugfln(msg string, args ...interface{}) {
+func (c *conn) Debugfln(msg string, args ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintf(c.DebugWriter, msg, args...)
 		fmt.Fprint(c.DebugWriter, "\n")
@@ -176,14 +185,14 @@ func (c *Connection) Debugfln(msg string, args ...interface{}) {
 }
 
 // Debug prints a debug message with fmt.Fprint
-func (c *Connection) Debug(parts ...interface{}) {
+func (c *conn) Debug(parts ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprint(c.DebugWriter, parts...)
 	}
 }
 
 // Debugln prints a debug message with fmt.Fprintln
-func (c *Connection) Debugln(parts ...interface{}) {
+func (c *conn) Debugln(parts ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintln(c.DebugWriter, parts...)
 	}
