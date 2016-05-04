@@ -26,38 +26,54 @@ import (
 
 // Tunnel contains functions to wrap IRC commands
 type Tunnel interface {
+	// Send the given irc.Message
 	Send(msg *irc.Message)
+	// Action sends the given message to the given channel as a CTCP action message
 	Action(channel, msg string)
+	// Privmsg sends the given message to the given channel
 	Privmsg(channel, msg string)
+	// Notice sends the given message to the given channel as a NOTICE
 	Notice(channel, msg string)
+	// Away sets the away message
 	Away(msg string)
+	// RemoveAway removes the away status
 	RemoveAway()
+	// Invite the given user to the given channel
 	Invite(user, ch string)
+	// Kick the given user from the given channel with the given message
 	Kick(ch, user, msg string)
+	// Mode changes channel and user modes
 	Mode(target, flags, args string)
+	// Oper authenticates the user as a server operator
 	Oper(username, password string)
+	// SetNick updates the nick locally and sends a nick change request to the server
 	SetNick(nick string)
+	// Join a channel
 	Join(chs, keys string)
+	// Part a channel
 	Part(ch, msg string)
+	// List requests the server for a list of channels
 	List()
+	// Topic sets the topic of the given channel
 	Topic(ch, topic string)
+	// Whois sends a WHOIS request on the given name
 	Whois(name string)
+	// Whowas sends a WHOWAS request on the given name
 	Whowas(name string)
+	// Who sends a WHO request with the given name
 	Who(name string, op bool)
+	// Quit from the server
 	Quit()
 }
 
-// Send the given irc.Message
 func (c *conn) Send(msg *irc.Message) {
 	c.output <- msg
 }
 
-// Action sends the given message to the given channel as a CTCP action message
 func (c *conn) Action(channel, msg string) {
 	c.Privmsg(channel, ctcp.Action(msg))
 }
 
-// Privmsg sends the given message to the given channel
 func (c *conn) Privmsg(channel, msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.PRIVMSG,
@@ -66,7 +82,6 @@ func (c *conn) Privmsg(channel, msg string) {
 	})
 }
 
-// Notice sends the given message to the given channel as a NOTICE
 func (c *conn) Notice(channel, msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.NOTICE,
@@ -75,7 +90,6 @@ func (c *conn) Notice(channel, msg string) {
 	})
 }
 
-// Away sets the away message
 func (c *conn) Away(msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.AWAY,
@@ -83,12 +97,10 @@ func (c *conn) Away(msg string) {
 	})
 }
 
-// RemoveAway removes the away status
 func (c *conn) RemoveAway() {
 	c.Away("")
 }
 
-// Invite the given user to the given channel
 func (c *conn) Invite(user, ch string) {
 	c.Send(&irc.Message{
 		Command: irc.INVITE,
@@ -96,7 +108,6 @@ func (c *conn) Invite(user, ch string) {
 	})
 }
 
-// Kick the given user from the given channel with the given message
 func (c *conn) Kick(ch, user, msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.KICK,
@@ -105,7 +116,6 @@ func (c *conn) Kick(ch, user, msg string) {
 	})
 }
 
-// Mode changes channel and user modes
 func (c *conn) Mode(target, flags, args string) {
 	c.Send(&irc.Message{
 		Command: irc.MODE,
@@ -113,12 +123,86 @@ func (c *conn) Mode(target, flags, args string) {
 	})
 }
 
-// Oper authenticates the user as a server operator
 func (c *conn) Oper(username, password string) {
 	c.Send(&irc.Message{
 		Command: irc.OPER,
 		Params:  []string{username, password},
 	})
+}
+
+func (c *conn) SetNick(nick string) {
+	c.PreferredNick = nick
+	c.Nick = nick
+	c.Send(&irc.Message{
+		Command: irc.NICK,
+		Params:  []string{nick},
+	})
+}
+
+func (c *conn) Join(chs string, keys string) {
+	c.Send(&irc.Message{
+		Command: irc.JOIN,
+		Params:  []string{chs, keys},
+	})
+}
+
+func (c *conn) Part(ch, msg string) {
+	c.Send(&irc.Message{
+		Command:  irc.JOIN,
+		Params:   []string{ch},
+		Trailing: msg,
+	})
+}
+
+func (c *conn) List() {
+	c.Send(&irc.Message{
+		Command: irc.LIST,
+	})
+}
+
+func (c *conn) Topic(ch, topic string) {
+	c.Send(&irc.Message{
+		Command:  irc.TOPIC,
+		Params:   []string{ch},
+		Trailing: topic,
+	})
+}
+
+func (c *conn) Whois(name string) {
+	c.Send(&irc.Message{
+		Command: irc.WHOIS,
+		Params:  []string{name},
+	})
+}
+
+func (c *conn) Whowas(name string) {
+	c.Send(&irc.Message{
+		Command: irc.WHOWAS,
+		Params:  []string{name},
+	})
+}
+
+func (c *conn) Who(name string, op bool) {
+	if op {
+		c.Send(&irc.Message{
+			Command: irc.WHOIS,
+			Params:  []string{name, "o"},
+		})
+	} else {
+		c.Send(&irc.Message{
+			Command: irc.WHOIS,
+			Params:  []string{name},
+		})
+	}
+}
+
+func (c *conn) Quit() {
+	c.Send(&irc.Message{
+		Command:  irc.QUIT,
+		Trailing: c.QuitMsg,
+	})
+	c.stopped = true
+	c.quit = true
 }
 
 // SendUser sends the USER message to the server
@@ -127,16 +211,6 @@ func (c *conn) SendUser() {
 		Command:  irc.USER,
 		Params:   []string{c.User, "0.0.0.0", "0.0.0.0"},
 		Trailing: c.RealName,
-	})
-}
-
-// SetNick updates the nick locally and sends a nick change request to the server
-func (c *conn) SetNick(nick string) {
-	c.PreferredNick = nick
-	c.Nick = nick
-	c.Send(&irc.Message{
-		Command: irc.NICK,
-		Params:  []string{nick},
 	})
 }
 
@@ -154,78 +228,4 @@ func (c *conn) Pong(msg string) {
 		Command:  irc.PONG,
 		Trailing: msg,
 	})
-}
-
-// Join a channel
-func (c *conn) Join(chs string, keys string) {
-	c.Send(&irc.Message{
-		Command: irc.JOIN,
-		Params:  []string{chs, keys},
-	})
-}
-
-// Part a channel
-func (c *conn) Part(ch, msg string) {
-	c.Send(&irc.Message{
-		Command:  irc.JOIN,
-		Params:   []string{ch},
-		Trailing: msg,
-	})
-}
-
-// List requests the server for a list of channels
-func (c *conn) List() {
-	c.Send(&irc.Message{
-		Command: irc.LIST,
-	})
-}
-
-// Topic sets the topic of the given channel
-func (c *conn) Topic(ch, topic string) {
-	c.Send(&irc.Message{
-		Command:  irc.TOPIC,
-		Params:   []string{ch},
-		Trailing: topic,
-	})
-}
-
-// Whois sends a WHOIS request on the given name
-func (c *conn) Whois(name string) {
-	c.Send(&irc.Message{
-		Command: irc.WHOIS,
-		Params:  []string{name},
-	})
-}
-
-// Whowas sends a WHOWAS request on the given name
-func (c *conn) Whowas(name string) {
-	c.Send(&irc.Message{
-		Command: irc.WHOWAS,
-		Params:  []string{name},
-	})
-}
-
-// Who sends a WHO request with the given name
-func (c *conn) Who(name string, op bool) {
-	if op {
-		c.Send(&irc.Message{
-			Command: irc.WHOIS,
-			Params:  []string{name, "o"},
-		})
-	} else {
-		c.Send(&irc.Message{
-			Command: irc.WHOIS,
-			Params:  []string{name},
-		})
-	}
-}
-
-// Quit from the server
-func (c *conn) Quit() {
-	c.Send(&irc.Message{
-		Command:  irc.QUIT,
-		Trailing: c.QuitMsg,
-	})
-	c.stopped = true
-	c.quit = true
 }
