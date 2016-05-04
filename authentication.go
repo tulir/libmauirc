@@ -32,6 +32,7 @@ type PasswordAuth struct {
 	Password string
 }
 
+// Do the authentication
 func (auth *PasswordAuth) Do(c *Connection) {
 	c.Send(&irc.Message{
 		Command: irc.PASS,
@@ -44,6 +45,7 @@ type NickServAuth struct {
 	Password string
 }
 
+// Do the authentication
 func (auth *NickServAuth) Do(c *Connection) {
 	c.Privmsg("NickServ", fmt.Sprintf("IDENTIFY %s", auth.Password))
 }
