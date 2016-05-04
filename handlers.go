@@ -74,6 +74,7 @@ func (c *Connection) RunHandlers(evt *irc.Message) {
 		evt.Command = fmt.Sprintf("CTCP_%s", tag)
 		evt.Trailing = text
 	}
+	evt.Params = append(evt.Params, strings.Split(evt.Trailing, " ")...)
 	for _, handle := range c.handlers[evt.Command] {
 		handle(evt)
 	}
