@@ -19,6 +19,7 @@ package libmauirc
 
 import (
 	"bufio"
+	"bytes"
 	"github.com/sorcix/irc"
 	"strings"
 	"time"
@@ -48,8 +49,8 @@ func (c *Connection) readLoop() {
 				return
 			}
 
-			c.Debugln("<--", strings.TrimSpace(msg))
-
+			msg = strings.TrimSpace(msg)
+			c.Debugln("<--", msg)
 			c.prevMsg = time.Now()
 			c.RunHandlers(irc.ParseMessage(msg))
 		}
@@ -69,7 +70,11 @@ func (c *Connection) writeLoop() {
 
 			c.Debugln("-->", strings.TrimSpace(b.String()))
 			c.socket.SetWriteDeadline(time.Now().Add(c.Timeout))
-			_, err := c.socket.Write(b.Bytes())
+			var buf bytes.Buffer
+			buf.Write(b.Bytes())
+			buf.WriteRune('\r')
+			buf.WriteRune('\n')
+			_, err := c.socket.Write(buf.Bytes())
 
 			var zero time.Time
 			c.socket.SetWriteDeadline(zero)
