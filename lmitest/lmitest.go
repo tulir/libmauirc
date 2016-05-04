@@ -30,12 +30,14 @@ import (
 
 var ip = flag.String("address", "localhost", "The address to connect to.")
 var port = flag.Int("port", 6667, "The port to connect to.")
+var tls = flag.Bool("tls", false, "Set to enable TLS")
 
 func main() {
 	flag.Parse()
 	c := irc.Create("lmitest", "lmitest", irc.IPv4Address{IP: *ip, Port: uint16(*port)})
 	c.SetRealName("libmauirc tester")
 	c.SetDebugWriter(os.Stdout)
+	c.SetUseTLS(*tls)
 
 	err := c.Connect()
 	if err != nil {
