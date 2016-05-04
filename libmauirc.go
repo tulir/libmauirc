@@ -147,6 +147,11 @@ func (c *Connection) Disconnect() {
 	c.Errors <- ErrDisconnected
 }
 
+// Connected checks if this connection is active
+func (c *Connection) Connected() bool {
+	return !c.quit && !c.stopped
+}
+
 // Debugf prints a debug message with fmt.Fprintf
 func (c *Connection) Debugf(msg string, args ...interface{}) {
 	if c.DebugWriter != nil {
