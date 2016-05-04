@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-// Package mauirc is the main package of this library
-package mauirc
+// Package libmauirc is the main package of this library
+package libmauirc
 
 import (
 	"github.com/sorcix/irc"
