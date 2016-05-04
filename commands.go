@@ -24,6 +24,29 @@ import (
 	"time"
 )
 
+// Tunnel contains functions to wrap IRC commands
+type Tunnel interface {
+	Send(msg *irc.Message)
+	Action(channel, msg string)
+	Privmsg(channel, msg string)
+	Notice(channel, msg string)
+	Away(msg string)
+	RemoveAway()
+	Invite(user, ch string)
+	Kick(ch, user, msg string)
+	Mode(target, flags, args string)
+	Oper(username, password string)
+	SetNick(nick string)
+	Join(chs, keys string)
+	Part(ch, msg string)
+	List()
+	Topic(ch, topic string)
+	Whois(name string)
+	Whowas(name string)
+	Who(name string, op bool)
+	Quit()
+}
+
 // Send the given irc.Message
 func (c *Connection) Send(msg *irc.Message) {
 	c.output <- msg
@@ -134,10 +157,10 @@ func (c *Connection) Pong(msg string) {
 }
 
 // Join a channel
-func (c *Connection) Join(ch string) {
+func (c *Connection) Join(chs string, keys string) {
 	c.Send(&irc.Message{
 		Command: irc.JOIN,
-		Params:  []string{ch},
+		Params:  []string{chs, keys},
 	})
 }
 
