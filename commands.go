@@ -78,6 +78,47 @@ func (c *Connection) Pong(msg string) {
 	})
 }
 
+// Join a channel
+func (c *Connection) Join(ch string) {
+	c.Send(&irc.Message{
+		Command: irc.JOIN,
+		Params:  []string{ch},
+	})
+}
+
+// Part a channel
+func (c *Connection) Part(ch, msg string) {
+	c.Send(&irc.Message{
+		Command:  irc.JOIN,
+		Params:   []string{ch},
+		Trailing: msg,
+	})
+}
+
+// List requests the server for a list of channels
+func (c *Connection) List() {
+	c.Send(&irc.Message{
+		Command: irc.LIST,
+	})
+}
+
+// Topic sets the topic of the given channel
+func (c *Connection) Topic(ch, topic string) {
+	c.Send(&irc.Message{
+		Command:  irc.TOPIC,
+		Params:   []string{ch},
+		Trailing: topic,
+	})
+}
+
+// Whois sends a WHOIS request on the given name
+func (c *Connection) Whois(name string) {
+	c.Send(&irc.Message{
+		Command: irc.WHOIS,
+		Params:  []string{name},
+	})
+}
+
 // Quit from the server
 func (c *Connection) Quit() {
 	c.Send(&irc.Message{
