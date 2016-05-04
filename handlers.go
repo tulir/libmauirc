@@ -82,7 +82,7 @@ func (c *Connection) RunHandlers(evt *irc.Message) {
 // AddStdHandlers add standard IRC handlers for this connection
 func (c *Connection) AddStdHandlers() {
 	c.AddHandler("ERROR", func(evt *irc.Message) {
-		// TODO disconnect
+		c.Disconnect()
 	})
 
 	c.AddHandler("PING", func(evt *irc.Message) {

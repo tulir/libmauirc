@@ -127,6 +127,26 @@ func (c *Connection) Connect() error {
 	return nil
 }
 
+// Disconnect from the IRC server
+func (c *Connection) Disconnect() {
+	if c.end != nil {
+		close(c.end)
+	}
+
+	c.end = nil
+
+	if c.output != nil {
+		close(c.output)
+	}
+
+	c.Wait()
+	if c.socket != nil {
+		c.socket.Close()
+	}
+	c.socket = nil
+	c.Errors <- ErrDisconnected
+}
+
 // Debugf prints a debug message with fmt.Fprintf
 func (c *Connection) Debugf(msg string, args ...interface{}) {
 	if c.DebugWriter != nil {

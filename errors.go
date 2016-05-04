@@ -40,3 +40,6 @@ var (
 	ErrInvalidNick    PreConnError = errors.New("No nick given")
 	ErrInvalidUser    PreConnError = errors.New("No user given")
 )
+
+// ErrDisconnected is given when the client disconnects
+var ErrDisconnected = errors.New("Disconnected")
