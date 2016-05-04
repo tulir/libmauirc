@@ -19,6 +19,7 @@ package mauirc
 
 import (
 	"bufio"
+	"github.com/sorcix/irc"
 	"strings"
 	"time"
 )
@@ -50,7 +51,7 @@ func (c *Connection) readLoop() {
 			c.Debugln("<--", strings.TrimSpace(msg))
 
 			c.prevMsg = time.Now()
-			// TODO parse msg and run handlers
+			c.RunHandlers(irc.ParseMessage(msg))
 		}
 	}
 }
