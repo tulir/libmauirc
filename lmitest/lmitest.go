@@ -22,7 +22,9 @@ import (
 	"github.com/sorcix/irc/ctcp"
 	irc "maunium.net/go/libmauirc"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 )
 
 var ip = flag.String("address", "localhost", "The address to connect to.")
@@ -38,6 +40,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	term := make(chan os.Signal, 1)
+	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-term
+		c.Debugln("\nInterrupt received...")
+		c.Quit()
+		os.Exit(0)
+	}()
 
 	go func() {
 		err := <-c.Errors
