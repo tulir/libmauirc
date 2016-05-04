@@ -63,10 +63,7 @@ type Connection struct {
 
 // Create an IRC connection
 func Create(nick, user, realname string, addr AddressHandler) *Connection {
-	if len(realname) == 0 {
-		realname = user
-	}
-	return &Connection{
+	c := &Connection{
 		Nick:          nick,
 		PreferredNick: nick,
 		User:          user,
@@ -80,6 +77,11 @@ func Create(nick, user, realname string, addr AddressHandler) *Connection {
 		PingFreq:      15 * time.Minute,
 		QuitMsg:       Version,
 	}
+
+	c.AddHandler("PING", func(evt *irc.Message) {
+		c.Pong(evt.Trailing)
+	})
+	return c
 }
 
 // Connect to the IRC server
@@ -93,7 +95,7 @@ func (c *Connection) Connect() error {
 	} else if len(c.User) == 0 {
 		return ErrInvalidUser
 	} else if len(c.RealName) == 0 {
-		return ErrInvalidRealName
+		c.RealName = c.User
 	}
 
 	var err error

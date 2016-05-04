@@ -36,8 +36,7 @@ func (err ConnectionError) Error() string {
 
 // Pre-connection errors
 var (
-	ErrInvalidAddress  PreConnError = errors.New("No address given")
-	ErrInvalidNick     PreConnError = errors.New("No nick given")
-	ErrInvalidUser     PreConnError = errors.New("No user given")
-	ErrInvalidRealName PreConnError = errors.New("No realname given")
+	ErrInvalidAddress PreConnError = errors.New("No address given")
+	ErrInvalidNick    PreConnError = errors.New("No nick given")
+	ErrInvalidUser    PreConnError = errors.New("No user given")
 )
