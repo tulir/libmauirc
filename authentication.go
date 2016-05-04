@@ -17,7 +17,33 @@
 // Package mauirc is the main package of this library
 package mauirc
 
+import (
+	"fmt"
+	"github.com/sorcix/irc"
+)
+
 // AuthHandler handles authentication to an IRC server
 type AuthHandler interface {
 	Do(c *Connection)
+}
+
+// PasswordAuth is an AuthHandler that authenticates using the IRC PASS command
+type PasswordAuth struct {
+	Password string
+}
+
+func (auth *PasswordAuth) Do(c *Connection) {
+	c.Send(&irc.Message{
+		Command: irc.PASS,
+		Params:  []string{auth.Password},
+	})
+}
+
+// NickServAuth is an AuthHandler that authenticates with NickServ
+type NickServAuth struct {
+	Password string
+}
+
+func (auth *NickServAuth) Do(c *Connection) {
+	c.Privmsg("NickServ", fmt.Sprintf("IDENTIFY %s", auth.Password))
 }
