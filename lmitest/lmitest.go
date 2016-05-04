@@ -34,8 +34,8 @@ var port = flag.Int("port", 6667, "The port to connect to.")
 func main() {
 	flag.Parse()
 	c := irc.Create("lmitest", "lmitest", irc.IPv4Address{IP: *ip, Port: uint16(*port)})
-	c.RealName = "libmauirc test"
-	c.DebugWriter = os.Stdout
+	c.SetRealName("libmauirc tester")
+	c.SetDebugWriter(os.Stdout)
 
 	err := c.Connect()
 	if err != nil {
@@ -53,7 +53,7 @@ func main() {
 	}()
 
 	go func() {
-		err := <-c.Errors
+		err := <-c.Errors()
 		c.Debugln(err)
 	}()
 
