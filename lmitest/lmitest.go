@@ -25,6 +25,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 )
 
 var ip = flag.String("address", "localhost", "The address to connect to.")
@@ -47,6 +48,7 @@ func main() {
 		<-term
 		c.Debugln("\nInterrupt received...")
 		c.Quit()
+		time.Sleep(1 * time.Second)
 		os.Exit(0)
 	}()
 
