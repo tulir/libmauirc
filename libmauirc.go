@@ -46,9 +46,8 @@ type Connection struct {
 	QuitMsg       string
 
 	handlers map[string][]Handler
-
-	Auths   []AuthHandler
-	Address AddressHandler
+	Auth     []AuthHandler
+	Address  AddressHandler
 
 	DebugWriter io.Writer
 	stopped     bool
@@ -69,7 +68,7 @@ func Create(nick, user string, addr AddressHandler) *Connection {
 		User:          user,
 		RealName:      user,
 		Address:       addr,
-		Auths:         make([]AuthHandler, 0),
+		Auth:          make([]AuthHandler, 0),
 		end:           make(chan struct{}),
 		handlers:      make(map[string][]Handler),
 		Version:       Version,
@@ -119,7 +118,7 @@ func (c *Connection) Connect() error {
 	go c.writeLoop()
 	go c.pingLoop()
 
-	for _, auth := range c.Auths {
+	for _, auth := range c.Auth {
 		auth.Do(c)
 	}
 
