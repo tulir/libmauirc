@@ -45,7 +45,7 @@ func (c *conn) readLoop() {
 			}
 
 			if err != nil {
-				c.Errors <- err
+				c.errors <- err
 				return
 			}
 
@@ -80,7 +80,7 @@ func (c *conn) writeLoop() {
 			c.socket.SetWriteDeadline(zero)
 
 			if err != nil {
-				c.Errors <- err
+				c.errors <- err
 				return
 			}
 		}

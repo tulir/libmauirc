@@ -38,14 +38,29 @@ type Debugger interface {
 	Debugfln(msg string, args ...interface{})
 }
 
+// IRCData has miscancellous functions to change IRC info
+type IRCData interface {
+	GetNick() string
+	GetPreferredNick() string
+	SetQuitMessage(msg string)
+	SetRealName(realname string)
+	SetVersion(version string)
+	SetUseTLS(tls bool)
+	AddAuth(auth AuthHandler)
+	SetAddress(addr Address)
+	SetDebugWriter(writer io.Writer)
+}
+
 // Connection is an IRC connection
 type Connection interface {
 	Debugger
 	HandlerHandler
 	Tunnel
+	IRCData
 	Connect() error
 	Disconnect()
 	Connected() bool
+	Errors() chan error
 }
 
 type conn struct {
@@ -73,7 +88,7 @@ type conn struct {
 	TLSConfig   *tls.Config
 	socket      net.Conn
 	output      chan *irc.Message
-	Errors      chan error
+	errors      chan error
 	end         chan struct{}
 }
 
@@ -128,7 +143,7 @@ func (c *conn) Connect() error {
 	c.stopped = false
 
 	c.output = make(chan *irc.Message, 10)
-	c.Errors = make(chan error, 2)
+	c.errors = make(chan error, 2)
 	c.Add(3)
 
 	go c.readLoop()
@@ -161,12 +176,52 @@ func (c *conn) Disconnect() {
 		c.socket.Close()
 	}
 	c.socket = nil
-	c.Errors <- ErrDisconnected
+	c.errors <- ErrDisconnected
 }
 
 // Connected checks if this connection is active
 func (c *conn) Connected() bool {
 	return !c.quit && !c.stopped
+}
+
+func (c *conn) GetNick() string {
+	return c.Nick
+}
+
+func (c *conn) GetPreferredNick() string {
+	return c.PreferredNick
+}
+
+func (c *conn) SetQuitMessage(msg string) {
+	c.QuitMsg = msg
+}
+
+func (c *conn) SetUseTLS(tls bool) {
+	c.UseTLS = tls
+}
+
+func (c *conn) SetRealName(realname string) {
+	c.RealName = realname
+}
+
+func (c *conn) SetVersion(version string) {
+	c.Version = version
+}
+
+func (c *conn) Errors() chan error {
+	return c.errors
+}
+
+func (c *conn) AddAuth(auth AuthHandler) {
+	c.Auth = append(c.Auth, auth)
+}
+
+func (c *conn) SetAddress(addr Address) {
+	c.Address = addr
+}
+
+func (c *conn) SetDebugWriter(writer io.Writer) {
+	c.DebugWriter = writer
 }
 
 // Debugf prints a debug message with fmt.Fprintf
