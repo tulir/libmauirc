@@ -47,7 +47,7 @@ type Connection struct {
 
 	handlers map[string][]Handler
 
-	Auth    AuthHandler
+	Auths   []AuthHandler
 	Address AddressHandler
 
 	DebugWriter io.Writer
@@ -72,6 +72,7 @@ func Create(nick, user, realname string, addr AddressHandler) *Connection {
 		User:          user,
 		RealName:      realname,
 		Address:       addr,
+		Auths:         make([]AuthHandler, 0),
 		end:           make(chan struct{}),
 		Version:       Version,
 		KeepAlive:     4 * time.Minute,
@@ -118,8 +119,8 @@ func (c *Connection) Connect() error {
 	go c.writeLoop()
 	go c.pingLoop()
 
-	if c.Auth != nil {
-		c.Auth.Do(c)
+	for _, auth := range c.Auths {
+		auth.Do(c)
 	}
 
 	c.SetNick(c.Nick)
