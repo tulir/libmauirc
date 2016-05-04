@@ -18,7 +18,9 @@
 package mauirc
 
 import (
+	"fmt"
 	"github.com/sorcix/irc"
+	"github.com/sorcix/irc/ctcp"
 	"strings"
 )
 
@@ -62,4 +64,15 @@ func (c *Connection) RemoveHandler(code string, index int) {
 func (c *Connection) GetHandlers(code string) (handlers []Handler, ok bool) {
 	handlers, ok = c.handlers[code]
 	return
+}
+
+// RunHandlers runs the handlers for the given code with the given event
+func (c *Connection) RunHandlers(evt *irc.Message) {
+	if tag, text, ok := ctcp.Decode(evt.Trailing); ok {
+		evt.Command = fmt.Sprintf("CTCP_%s", tag)
+		evt.Trailing = text
+	}
+	for _, handle := range c.handlers[evt.Command] {
+		handle(evt)
+	}
 }

@@ -18,20 +18,52 @@
 package mauirc
 
 import (
-	"fmt"
+	"github.com/sorcix/irc"
+	"github.com/sorcix/irc/ctcp"
+	"strconv"
+	"time"
 )
 
-// SendRawf formats the given string and sends it to the IRC server
-func (c *Connection) SendRawf(msg string, args ...interface{}) {
-	c.SendRawString(fmt.Sprintf(msg, args...))
+// Send the given irc.Message
+func (c *Connection) Send(msg *irc.Message) {
+	c.output <- msg
 }
 
-// SendRaw joins the given parts and sends the result to the IRC server
-func (c *Connection) SendRaw(msg ...interface{}) {
-	c.SendRawString(fmt.Sprint(msg...))
+// Action sends the given message to the given channel as a CTCP action message
+func (c *Connection) Action(channel, msg string) {
+	c.Privmsg(channel, ctcp.Action(msg))
 }
 
-// SendRawString sends the given message to the IRC server
-func (c *Connection) SendRawString(msg string) {
+// Privmsg sends the given message to the given channel
+func (c *Connection) Privmsg(channel, msg string) {
+	c.Send(&irc.Message{
+		Command: irc.PRIVMSG,
+		Params:  []string{channel, msg},
+	})
+}
 
+// SendUser sends the USER message to the server
+func (c *Connection) SendUser() {
+	c.Send(&irc.Message{
+		Command: irc.USER,
+		Params:  []string{c.User, "0.0.0.0", "0.0.0.0", c.RealName},
+	})
+}
+
+// SetNick updates the nick locally and sends a nick change request to the server
+func (c *Connection) SetNick(nick string) {
+	c.PreferredNick = nick
+	c.Nick = nick
+	c.Send(&irc.Message{
+		Command: irc.NICK,
+		Params:  []string{nick},
+	})
+}
+
+// Ping the IRC server
+func (c *Connection) Ping() {
+	c.Send(&irc.Message{
+		Command: irc.PING,
+		Params:  []string{strconv.FormatInt(time.Now().UnixNano(), 10)},
+	})
 }
