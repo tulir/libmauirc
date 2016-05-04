@@ -30,6 +30,14 @@ import (
 // Version is the IRC client version string
 var Version = "libmauirc 0.1"
 
+// Debugger is something to send debug messages to
+type Debugger interface {
+	Debug(parts ...interface{})
+	Debugln(parts ...interface{})
+	Debugf(msg string, args ...interface{})
+	Debugfln(msg string, args ...interface{})
+}
+
 // Connection is an IRC connection
 type Connection struct {
 	sync.WaitGroup
