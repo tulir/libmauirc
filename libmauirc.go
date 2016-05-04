@@ -36,10 +36,11 @@ type Debugger interface {
 	Debugln(parts ...interface{})
 	Debugf(msg string, args ...interface{})
 	Debugfln(msg string, args ...interface{})
+	SetDebugWriter(writer io.Writer)
 }
 
-// IRCData has miscancellous functions to change IRC info
-type IRCData interface {
+// Data has miscancellous functions to change IRC info
+type Data interface {
 	GetNick() string
 	GetPreferredNick() string
 	SetQuitMessage(msg string)
@@ -48,7 +49,18 @@ type IRCData interface {
 	SetUseTLS(tls bool)
 	AddAuth(auth AuthHandler)
 	SetAddress(addr Address)
-	SetDebugWriter(writer io.Writer)
+}
+
+// Connectable contains functions to connect and disconnect
+type Connectable interface {
+	Connect() error
+	Disconnect()
+	Connected() bool
+}
+
+// ErrorStream contains a function that returns a channel of errors
+type ErrorStream interface {
+	Errors() chan error
 }
 
 // Connection is an IRC connection
@@ -56,11 +68,9 @@ type Connection interface {
 	Debugger
 	HandlerHandler
 	Tunnel
-	IRCData
-	Connect() error
-	Disconnect()
-	Connected() bool
-	Errors() chan error
+	Data
+	Connectable
+	ErrorStream
 }
 
 type conn struct {
