@@ -92,7 +92,7 @@ func (c *Connection) AddStdHandlers() {
 	c.AddHandler("PONG", func(evt *irc.Message) {
 		ns, _ := strconv.ParseInt(evt.Trailing, 10, 64)
 		delta := time.Duration(time.Now().UnixNano() - ns)
-		c.Debugfln("Lag: %vs", delta)
+		c.Debugfln("Lag: %v", delta)
 	})
 
 	c.AddHandler("CTCP_VERSION", func(evt *irc.Message) {
