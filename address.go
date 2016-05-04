@@ -21,8 +21,8 @@ import (
 	"fmt"
 )
 
-// AddressHandler is an interface with a function that returns a valid connection address.
-type AddressHandler interface {
+// Address is an interface with a function that returns a valid connection address.
+type Address interface {
 	String() string
 }
 

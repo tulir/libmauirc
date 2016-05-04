@@ -64,7 +64,7 @@ type conn struct {
 
 	handlers map[string][]Handler
 	Auth     []AuthHandler
-	Address  AddressHandler
+	Address  Address
 
 	DebugWriter io.Writer
 	stopped     bool
@@ -78,7 +78,7 @@ type conn struct {
 }
 
 // Create an IRC connection
-func Create(nick, user string, addr AddressHandler) Connection {
+func Create(nick, user string, addr Address) Connection {
 	c := &conn{
 		Nick:          nick,
 		PreferredNick: nick,
