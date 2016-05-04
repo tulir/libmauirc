@@ -62,12 +62,12 @@ type Connection struct {
 }
 
 // Create an IRC connection
-func Create(nick, user, realname string, addr AddressHandler) *Connection {
+func Create(nick, user string, addr AddressHandler) *Connection {
 	c := &Connection{
 		Nick:          nick,
 		PreferredNick: nick,
 		User:          user,
-		RealName:      realname,
+		RealName:      user,
 		Address:       addr,
 		Auths:         make([]AuthHandler, 0),
 		end:           make(chan struct{}),
