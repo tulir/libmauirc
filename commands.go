@@ -69,3 +69,11 @@ func (c *Connection) Ping() {
 		Params:  []string{strconv.FormatInt(time.Now().UnixNano(), 10)},
 	})
 }
+
+// Pong replies to a Ping
+func (c *Connection) Pong(msg string) {
+	c.Send(&irc.Message{
+		Command:  irc.PONG,
+		Trailing: msg,
+	})
+}
