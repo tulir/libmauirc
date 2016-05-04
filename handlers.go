@@ -21,7 +21,9 @@ import (
 	"fmt"
 	"github.com/sorcix/irc"
 	"github.com/sorcix/irc/ctcp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // Handler is an IRC event handler
@@ -75,4 +77,81 @@ func (c *Connection) RunHandlers(evt *irc.Message) {
 	for _, handle := range c.handlers[evt.Command] {
 		handle(evt)
 	}
+}
+
+// AddStdHandlers add standard IRC handlers for this connection
+func (c *Connection) AddStdHandlers() {
+	c.AddHandler("ERROR", func(evt *irc.Message) {
+		// TODO disconnect
+	})
+
+	c.AddHandler("PING", func(evt *irc.Message) {
+		c.Pong(evt.Trailing)
+	})
+
+	c.AddHandler("PONG", func(evt *irc.Message) {
+		ns, _ := strconv.ParseInt(evt.Trailing, 10, 64)
+		delta := time.Duration(time.Now().UnixNano() - ns)
+		c.Debugfln("Lag: %vs", delta)
+	})
+
+	c.AddHandler("CTCP_VERSION", func(evt *irc.Message) {
+		c.Send(&irc.Message{
+			Command:  "NOTICE",
+			Params:   []string{evt.Name},
+			Trailing: ctcp.Version(c.Version),
+		})
+	})
+
+	c.AddHandler("CTCP_USERINFO", func(evt *irc.Message) {
+		c.Send(&irc.Message{
+			Command:  "NOTICE",
+			Params:   []string{evt.Name},
+			Trailing: ctcp.UserInfo(c.User),
+		})
+	})
+
+	c.AddHandler("CTCP_CLIENTINFO", func(evt *irc.Message) {
+		c.Send(&irc.Message{
+			Command:  "NOTICE",
+			Params:   []string{evt.Name},
+			Trailing: ctcp.ClientInfo("CLIENTINFO PING VERSION TIME USERINFO CLIENTINFO"),
+		})
+	})
+
+	c.AddHandler("CTCP_TIME", func(evt *irc.Message) {
+		c.Send(&irc.Message{
+			Command:  "NOTICE",
+			Params:   []string{evt.Name},
+			Trailing: ctcp.TimeReply(),
+		})
+	})
+
+	c.AddHandler("CTCP_PING", func(evt *irc.Message) {
+		c.Send(&irc.Message{
+			Command:  "NOTICE",
+			Params:   []string{evt.Name},
+			Trailing: ctcp.Pong(evt.Trailing),
+		})
+	})
+
+	nickused := func(evt *irc.Message) {
+		if len(c.Nick) >= 9 {
+			c.SetNick("_" + c.Nick)
+		} else {
+			c.SetNick(c.Nick + "_")
+		}
+	}
+	c.AddHandler("437", nickused)
+	c.AddHandler("433", nickused)
+
+	c.AddHandler("NICK", func(evt *irc.Message) {
+		if evt.Name == c.PreferredNick {
+			c.Nick = evt.Trailing
+		}
+	})
+
+	c.AddHandler("001", func(evt *irc.Message) {
+		c.Nick = evt.Params[0]
+	})
 }

@@ -77,10 +77,7 @@ func Create(nick, user string, addr AddressHandler) *Connection {
 		PingFreq:      15 * time.Minute,
 		QuitMsg:       Version,
 	}
-
-	c.AddHandler("PING", func(evt *irc.Message) {
-		c.Pong(evt.Trailing)
-	})
+	c.AddStdHandlers()
 	return c
 }
 
