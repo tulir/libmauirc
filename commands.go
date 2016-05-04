@@ -37,16 +37,18 @@ func (c *Connection) Action(channel, msg string) {
 // Privmsg sends the given message to the given channel
 func (c *Connection) Privmsg(channel, msg string) {
 	c.Send(&irc.Message{
-		Command: irc.PRIVMSG,
-		Params:  []string{channel, msg},
+		Command:  irc.PRIVMSG,
+		Params:   []string{channel},
+		Trailing: msg,
 	})
 }
 
 // SendUser sends the USER message to the server
 func (c *Connection) SendUser() {
 	c.Send(&irc.Message{
-		Command: irc.USER,
-		Params:  []string{c.User, "0.0.0.0", "0.0.0.0", c.RealName},
+		Command:  irc.USER,
+		Params:   []string{c.User, "0.0.0.0", "0.0.0.0"},
+		Trailing: c.RealName,
 	})
 }
 
