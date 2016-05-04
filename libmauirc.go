@@ -71,6 +71,7 @@ func Create(nick, user string, addr AddressHandler) *Connection {
 		Address:       addr,
 		Auths:         make([]AuthHandler, 0),
 		end:           make(chan struct{}),
+		handlers:      make(map[string][]Handler),
 		Version:       Version,
 		KeepAlive:     4 * time.Minute,
 		Timeout:       1 * time.Minute,
