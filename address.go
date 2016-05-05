@@ -27,7 +27,7 @@ type Address interface {
 	String() string
 }
 
-// IPv4Address implements AddressHandler for IPv4 addresses
+// IPv4Address implements AddressHandler for IPv4 addresses and domain names
 type IPv4Address struct {
 	IP   string
 	Port uint16
