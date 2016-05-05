@@ -89,6 +89,8 @@ func (c *ConnImpl) RunHandlers(evt *irc.Message) {
 }
 
 // AddStdHandlers add standard IRC handlers for this connection
+// The standard handlers include an IRC ERROR handler, ping and pong handler, CTCP version, userinfo, clientinfo,
+// time and ping handlers and a nick change handler.
 func (c *ConnImpl) AddStdHandlers() {
 	c.AddHandler("ERROR", func(evt *irc.Message) {
 		c.Disconnect()

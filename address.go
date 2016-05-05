@@ -23,6 +23,7 @@ import (
 
 // Address is an interface with a function that returns a valid connection address.
 type Address interface {
+	// String returns the address as a string
 	String() string
 }
 
@@ -32,6 +33,7 @@ type IPv4Address struct {
 	Port uint16
 }
 
+// String turns IPv4 addresses into ip:port format
 func (addr IPv4Address) String() string {
 	return fmt.Sprintf("%s:%d", addr.IP, addr.Port)
 }
@@ -42,6 +44,7 @@ type IPv6Address struct {
 	Port uint16
 }
 
+// String turns IPv6 addresses into [ip]:port format
 func (addr IPv6Address) String() string {
 	return fmt.Sprintf("[%s]:%d", addr.IP, addr.Port)
 }

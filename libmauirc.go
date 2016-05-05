@@ -32,14 +32,19 @@ var Version = "libmauirc 0.1"
 
 // Debugger is something to send debug messages to
 type Debugger interface {
+	// Debug prints a debug message with fmt.Fprint
 	Debug(parts ...interface{})
+	// Debugln prints a debug message with fmt.Fprintln
 	Debugln(parts ...interface{})
+	// Debugf prints a debug message with fmt.Fprintf
 	Debugf(msg string, args ...interface{})
+	// Debugfln prints a debug message with fmt.Fprintf and appends \n
 	Debugfln(msg string, args ...interface{})
+	// SetDebugWriter changes the io.Writer to which debug data should be written to
 	SetDebugWriter(writer io.Writer)
 }
 
-// Data has miscancellous functions to change IRC info
+// Data has miscancellous functions to change IRC info.
 type Data interface {
 	GetNick() string
 	GetPreferredNick() string
@@ -53,20 +58,22 @@ type Data interface {
 
 // Connectable contains functions to connect and disconnect
 type Connectable interface {
-	// Connect to the server
+	// Connect to the server.
+	// An error will be returned if some settings are incorrect or if an error is received while connecting.
 	Connect() error
-	// Disconnect from the server
+	// Disconnect from the server.
 	Disconnect()
-	// Connected checks if the connection is active
+	// Connected checks if the connection is active.
 	Connected() bool
 }
 
-// ErrorStream contains a function that returns a channel of errors
+// ErrorStream contains a function that returns a channel of non-lethal errors.
 type ErrorStream interface {
 	Errors() chan error
 }
 
-// Connection is an IRC connection
+// Connection contains all the necessary interfaces for an IRC connection.
+// The default implementation is ConnImpl.
 type Connection interface {
 	Debugger
 	HandlerHandler
@@ -76,7 +83,9 @@ type Connection interface {
 	ErrorStream
 }
 
-// ConnImpl is the standard implementation of Connection
+// ConnImpl is the default implementation of Connection.
+// The functions here don't have separate documentation. See the documentation of the interfaces
+// Connection contains for documentation on ConnImpl's functions.
 type ConnImpl struct {
 	sync.WaitGroup
 	PingFreq  time.Duration
@@ -106,7 +115,8 @@ type ConnImpl struct {
 	end         chan struct{}
 }
 
-// Create an IRC connection
+// Create an IRC connection with the given details.
+// By default, RealName is set to the same value as user.
 func Create(nick, user string, addr Address) Connection {
 	c := &ConnImpl{
 		Nick:          nick,
@@ -127,7 +137,6 @@ func Create(nick, user string, addr Address) Connection {
 	return c
 }
 
-// Connect to the IRC server
 func (c *ConnImpl) Connect() error {
 	c.stopped = true
 
@@ -173,7 +182,6 @@ func (c *ConnImpl) Connect() error {
 	return nil
 }
 
-// Disconnect from the IRC server
 func (c *ConnImpl) Disconnect() {
 	if c.end != nil {
 		close(c.end)
@@ -193,7 +201,6 @@ func (c *ConnImpl) Disconnect() {
 	c.errors <- ErrDisconnected
 }
 
-// Connected checks if this connection is active
 func (c *ConnImpl) Connected() bool {
 	return !c.quit && !c.stopped
 }
@@ -238,14 +245,12 @@ func (c *ConnImpl) SetDebugWriter(writer io.Writer) {
 	c.DebugWriter = writer
 }
 
-// Debugf prints a debug message with fmt.Fprintf
 func (c *ConnImpl) Debugf(msg string, args ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintf(c.DebugWriter, msg, args...)
 	}
 }
 
-// Debugfln prints a debug message with fmt.Fprintf and appends \n
 func (c *ConnImpl) Debugfln(msg string, args ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintf(c.DebugWriter, msg, args...)
@@ -253,14 +258,12 @@ func (c *ConnImpl) Debugfln(msg string, args ...interface{}) {
 	}
 }
 
-// Debug prints a debug message with fmt.Fprint
 func (c *ConnImpl) Debug(parts ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprint(c.DebugWriter, parts...)
 	}
 }
 
-// Debugln prints a debug message with fmt.Fprintln
 func (c *ConnImpl) Debugln(parts ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintln(c.DebugWriter, parts...)
