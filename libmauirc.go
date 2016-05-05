@@ -53,8 +53,11 @@ type Data interface {
 
 // Connectable contains functions to connect and disconnect
 type Connectable interface {
+	// Connect to the server
 	Connect() error
+	// Disconnect from the server
 	Disconnect()
+	// Connected checks if the connection is active
 	Connected() bool
 }
 
@@ -73,6 +76,7 @@ type Connection interface {
 	ErrorStream
 }
 
+// ConnImpl is the standard implementation of Connection
 type ConnImpl struct {
 	sync.WaitGroup
 	PingFreq  time.Duration

@@ -24,6 +24,7 @@ import (
 
 // AuthHandler handles authentication to an IRC server
 type AuthHandler interface {
+	// Do is called when necessary authentication tasks should be executed.
 	Do(c *ConnImpl)
 }
 
@@ -32,7 +33,6 @@ type PasswordAuth struct {
 	Password string
 }
 
-// Do the authentication
 func (auth *PasswordAuth) Do(c *ConnImpl) {
 	c.Send(&irc.Message{
 		Command: irc.PASS,
@@ -45,7 +45,6 @@ type NickServAuth struct {
 	Password string
 }
 
-// Do the authentication
 func (auth *NickServAuth) Do(c *ConnImpl) {
 	c.Privmsg("NickServ", fmt.Sprintf("IDENTIFY %s", auth.Password))
 }
