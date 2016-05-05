@@ -30,8 +30,6 @@ import (
 type HandlerHandler interface {
 	// AddHandler adds the given handler to the given code and returns the handler index
 	AddHandler(code string, handler Handler) int
-	// RemoveHandler removes the handler with the given index from the given code
-	RemoveHandler(code string, index int)
 	// GetHandlers gets all the handlers for the given code
 	GetHandlers(code string) (handlers []Handler, ok bool)
 	// RunHandlers runs the handlers for the given code with the given event
