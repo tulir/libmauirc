@@ -66,15 +66,15 @@ type Tunnel interface {
 	Quit()
 }
 
-func (c *conn) Send(msg *irc.Message) {
+func (c *ConnImpl) Send(msg *irc.Message) {
 	c.output <- msg
 }
 
-func (c *conn) Action(channel, msg string) {
+func (c *ConnImpl) Action(channel, msg string) {
 	c.Privmsg(channel, ctcp.Action(msg))
 }
 
-func (c *conn) Privmsg(channel, msg string) {
+func (c *ConnImpl) Privmsg(channel, msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.PRIVMSG,
 		Params:   []string{channel},
@@ -82,7 +82,7 @@ func (c *conn) Privmsg(channel, msg string) {
 	})
 }
 
-func (c *conn) Notice(channel, msg string) {
+func (c *ConnImpl) Notice(channel, msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.NOTICE,
 		Params:   []string{channel},
@@ -90,25 +90,25 @@ func (c *conn) Notice(channel, msg string) {
 	})
 }
 
-func (c *conn) Away(msg string) {
+func (c *ConnImpl) Away(msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.AWAY,
 		Trailing: msg,
 	})
 }
 
-func (c *conn) RemoveAway() {
+func (c *ConnImpl) RemoveAway() {
 	c.Away("")
 }
 
-func (c *conn) Invite(user, ch string) {
+func (c *ConnImpl) Invite(user, ch string) {
 	c.Send(&irc.Message{
 		Command: irc.INVITE,
 		Params:  []string{user, ch},
 	})
 }
 
-func (c *conn) Kick(ch, user, msg string) {
+func (c *ConnImpl) Kick(ch, user, msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.KICK,
 		Params:   []string{ch, user},
@@ -116,21 +116,21 @@ func (c *conn) Kick(ch, user, msg string) {
 	})
 }
 
-func (c *conn) Mode(target, flags, args string) {
+func (c *ConnImpl) Mode(target, flags, args string) {
 	c.Send(&irc.Message{
 		Command: irc.MODE,
 		Params:  []string{target, flags, args},
 	})
 }
 
-func (c *conn) Oper(username, password string) {
+func (c *ConnImpl) Oper(username, password string) {
 	c.Send(&irc.Message{
 		Command: irc.OPER,
 		Params:  []string{username, password},
 	})
 }
 
-func (c *conn) SetNick(nick string) {
+func (c *ConnImpl) SetNick(nick string) {
 	c.PreferredNick = nick
 	c.Nick = nick
 	c.Send(&irc.Message{
@@ -139,14 +139,14 @@ func (c *conn) SetNick(nick string) {
 	})
 }
 
-func (c *conn) Join(chs string, keys string) {
+func (c *ConnImpl) Join(chs string, keys string) {
 	c.Send(&irc.Message{
 		Command: irc.JOIN,
 		Params:  []string{chs, keys},
 	})
 }
 
-func (c *conn) Part(ch, msg string) {
+func (c *ConnImpl) Part(ch, msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.JOIN,
 		Params:   []string{ch},
@@ -154,13 +154,13 @@ func (c *conn) Part(ch, msg string) {
 	})
 }
 
-func (c *conn) List() {
+func (c *ConnImpl) List() {
 	c.Send(&irc.Message{
 		Command: irc.LIST,
 	})
 }
 
-func (c *conn) Topic(ch, topic string) {
+func (c *ConnImpl) Topic(ch, topic string) {
 	c.Send(&irc.Message{
 		Command:  irc.TOPIC,
 		Params:   []string{ch},
@@ -168,21 +168,21 @@ func (c *conn) Topic(ch, topic string) {
 	})
 }
 
-func (c *conn) Whois(name string) {
+func (c *ConnImpl) Whois(name string) {
 	c.Send(&irc.Message{
 		Command: irc.WHOIS,
 		Params:  []string{name},
 	})
 }
 
-func (c *conn) Whowas(name string) {
+func (c *ConnImpl) Whowas(name string) {
 	c.Send(&irc.Message{
 		Command: irc.WHOWAS,
 		Params:  []string{name},
 	})
 }
 
-func (c *conn) Who(name string, op bool) {
+func (c *ConnImpl) Who(name string, op bool) {
 	if op {
 		c.Send(&irc.Message{
 			Command: irc.WHOIS,
@@ -196,7 +196,7 @@ func (c *conn) Who(name string, op bool) {
 	}
 }
 
-func (c *conn) Quit() {
+func (c *ConnImpl) Quit() {
 	c.Send(&irc.Message{
 		Command:  irc.QUIT,
 		Trailing: c.QuitMsg,
@@ -206,7 +206,7 @@ func (c *conn) Quit() {
 }
 
 // SendUser sends the USER message to the server
-func (c *conn) SendUser() {
+func (c *ConnImpl) SendUser() {
 	c.Send(&irc.Message{
 		Command:  irc.USER,
 		Params:   []string{c.User, "0.0.0.0", "0.0.0.0"},
@@ -215,7 +215,7 @@ func (c *conn) SendUser() {
 }
 
 // Ping the IRC server
-func (c *conn) Ping() {
+func (c *ConnImpl) Ping() {
 	c.Send(&irc.Message{
 		Command: irc.PING,
 		Params:  []string{strconv.FormatInt(time.Now().UnixNano(), 10)},
@@ -223,7 +223,7 @@ func (c *conn) Ping() {
 }
 
 // Pong replies to a Ping
-func (c *conn) Pong(msg string) {
+func (c *ConnImpl) Pong(msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.PONG,
 		Trailing: msg,

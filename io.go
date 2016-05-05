@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-func (c *conn) readLoop() {
+func (c *ConnImpl) readLoop() {
 	defer c.Done()
 	br := bufio.NewReaderSize(c.socket, 512)
 
@@ -57,7 +57,7 @@ func (c *conn) readLoop() {
 	}
 }
 
-func (c *conn) writeLoop() {
+func (c *ConnImpl) writeLoop() {
 	defer c.Done()
 	for {
 		select {
@@ -87,7 +87,7 @@ func (c *conn) writeLoop() {
 	}
 }
 
-func (c *conn) pingLoop() {
+func (c *ConnImpl) pingLoop() {
 	defer c.Done()
 	mins := time.NewTicker(1 * time.Minute)
 	pingfreq := time.NewTicker(c.PingFreq)

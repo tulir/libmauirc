@@ -38,7 +38,7 @@ type HandlerHandler interface {
 type Handler func(evt *irc.Message)
 
 // AddHandler adds the given handler to the given code and returns the handler index
-func (c *conn) AddHandler(code string, handler Handler) int {
+func (c *ConnImpl) AddHandler(code string, handler Handler) int {
 	code = strings.ToUpper(code)
 	handlers, ok := c.handlers[code]
 	if !ok {
@@ -53,7 +53,7 @@ func (c *conn) AddHandler(code string, handler Handler) int {
 }
 
 // RemoveHandler removes the handler with the given index from the given code
-func (c *conn) RemoveHandler(code string, index int) {
+func (c *ConnImpl) RemoveHandler(code string, index int) {
 	handlers, ok := c.handlers[code]
 	if !ok || len(handlers) == 0 || len(handlers) >= index || index < 0 {
 		return
@@ -71,13 +71,13 @@ func (c *conn) RemoveHandler(code string, index int) {
 }
 
 // GetHandlers gets all the handlers for the given code
-func (c *conn) GetHandlers(code string) (handlers []Handler, ok bool) {
+func (c *ConnImpl) GetHandlers(code string) (handlers []Handler, ok bool) {
 	handlers, ok = c.handlers[code]
 	return
 }
 
 // RunHandlers runs the handlers for the given code with the given event
-func (c *conn) RunHandlers(evt *irc.Message) {
+func (c *ConnImpl) RunHandlers(evt *irc.Message) {
 	if tag, text, ok := ctcp.Decode(evt.Trailing); ok && evt.Command == irc.PRIVMSG {
 		evt.Command = fmt.Sprintf("CTCP_%s", tag)
 		evt.Trailing = text
@@ -89,7 +89,7 @@ func (c *conn) RunHandlers(evt *irc.Message) {
 }
 
 // AddStdHandlers add standard IRC handlers for this connection
-func (c *conn) AddStdHandlers() {
+func (c *ConnImpl) AddStdHandlers() {
 	c.AddHandler("ERROR", func(evt *irc.Message) {
 		c.Disconnect()
 	})

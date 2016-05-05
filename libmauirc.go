@@ -73,7 +73,7 @@ type Connection interface {
 	ErrorStream
 }
 
-type conn struct {
+type ConnImpl struct {
 	sync.WaitGroup
 	PingFreq  time.Duration
 	KeepAlive time.Duration
@@ -104,7 +104,7 @@ type conn struct {
 
 // Create an IRC connection
 func Create(nick, user string, addr Address) Connection {
-	c := &conn{
+	c := &ConnImpl{
 		Nick:          nick,
 		PreferredNick: nick,
 		User:          user,
@@ -124,7 +124,7 @@ func Create(nick, user string, addr Address) Connection {
 }
 
 // Connect to the IRC server
-func (c *conn) Connect() error {
+func (c *ConnImpl) Connect() error {
 	c.stopped = true
 
 	if c.Address == nil {
@@ -170,7 +170,7 @@ func (c *conn) Connect() error {
 }
 
 // Disconnect from the IRC server
-func (c *conn) Disconnect() {
+func (c *ConnImpl) Disconnect() {
 	if c.end != nil {
 		close(c.end)
 	}
@@ -190,59 +190,59 @@ func (c *conn) Disconnect() {
 }
 
 // Connected checks if this connection is active
-func (c *conn) Connected() bool {
+func (c *ConnImpl) Connected() bool {
 	return !c.quit && !c.stopped
 }
 
-func (c *conn) GetNick() string {
+func (c *ConnImpl) GetNick() string {
 	return c.Nick
 }
 
-func (c *conn) GetPreferredNick() string {
+func (c *ConnImpl) GetPreferredNick() string {
 	return c.PreferredNick
 }
 
-func (c *conn) SetQuitMessage(msg string) {
+func (c *ConnImpl) SetQuitMessage(msg string) {
 	c.QuitMsg = msg
 }
 
-func (c *conn) SetUseTLS(tls bool) {
+func (c *ConnImpl) SetUseTLS(tls bool) {
 	c.UseTLS = tls
 }
 
-func (c *conn) SetRealName(realname string) {
+func (c *ConnImpl) SetRealName(realname string) {
 	c.RealName = realname
 }
 
-func (c *conn) SetVersion(version string) {
+func (c *ConnImpl) SetVersion(version string) {
 	c.Version = version
 }
 
-func (c *conn) Errors() chan error {
+func (c *ConnImpl) Errors() chan error {
 	return c.errors
 }
 
-func (c *conn) AddAuth(auth AuthHandler) {
+func (c *ConnImpl) AddAuth(auth AuthHandler) {
 	c.Auth = append(c.Auth, auth)
 }
 
-func (c *conn) SetAddress(addr Address) {
+func (c *ConnImpl) SetAddress(addr Address) {
 	c.Address = addr
 }
 
-func (c *conn) SetDebugWriter(writer io.Writer) {
+func (c *ConnImpl) SetDebugWriter(writer io.Writer) {
 	c.DebugWriter = writer
 }
 
 // Debugf prints a debug message with fmt.Fprintf
-func (c *conn) Debugf(msg string, args ...interface{}) {
+func (c *ConnImpl) Debugf(msg string, args ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintf(c.DebugWriter, msg, args...)
 	}
 }
 
 // Debugfln prints a debug message with fmt.Fprintf and appends \n
-func (c *conn) Debugfln(msg string, args ...interface{}) {
+func (c *ConnImpl) Debugfln(msg string, args ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintf(c.DebugWriter, msg, args...)
 		fmt.Fprint(c.DebugWriter, "\n")
@@ -250,14 +250,14 @@ func (c *conn) Debugfln(msg string, args ...interface{}) {
 }
 
 // Debug prints a debug message with fmt.Fprint
-func (c *conn) Debug(parts ...interface{}) {
+func (c *ConnImpl) Debug(parts ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprint(c.DebugWriter, parts...)
 	}
 }
 
 // Debugln prints a debug message with fmt.Fprintln
-func (c *conn) Debugln(parts ...interface{}) {
+func (c *ConnImpl) Debugln(parts ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintln(c.DebugWriter, parts...)
 	}
