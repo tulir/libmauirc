@@ -185,12 +185,12 @@ func (c *ConnImpl) Whowas(name string) {
 func (c *ConnImpl) Who(name string, op bool) {
 	if op {
 		c.Send(&irc.Message{
-			Command: irc.WHOIS,
+			Command: irc.WHO,
 			Params:  []string{name, "o"},
 		})
 	} else {
 		c.Send(&irc.Message{
-			Command: irc.WHOIS,
+			Command: irc.WHO,
 			Params:  []string{name},
 		})
 	}
