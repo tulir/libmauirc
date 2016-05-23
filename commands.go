@@ -148,7 +148,7 @@ func (c *ConnImpl) Join(chs string, keys string) {
 
 func (c *ConnImpl) Part(ch, msg string) {
 	c.Send(&irc.Message{
-		Command:  irc.JOIN,
+		Command:  irc.PART,
 		Params:   []string{ch},
 		Trailing: msg,
 	})
