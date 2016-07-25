@@ -65,6 +65,8 @@ type Connectable interface {
 	Disconnect()
 	// Connected checks if the connection is active.
 	Connected() bool
+	// LocalAddr gets the local address of a connection
+	LocalAddr() net.Addr
 }
 
 // ErrorStream contains a function that returns a channel of non-lethal errors.
@@ -180,6 +182,10 @@ func (c *ConnImpl) Connect() error {
 	c.SetNick(c.Nick)
 	c.SendUser()
 	return nil
+}
+
+func (c *ConnImpl) LocalAddr() net.Addr {
+	return c.socket.LocalAddr()
 }
 
 func (c *ConnImpl) Disconnect() {
