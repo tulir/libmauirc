@@ -189,6 +189,7 @@ func (c *ConnImpl) LocalAddr() net.Addr {
 }
 
 func (c *ConnImpl) Disconnect() {
+	defer recover()
 	if c.end != nil {
 		close(c.end)
 	}
