@@ -17,10 +17,11 @@ package main
 
 import (
 	"bufio"
-	"flag"
+	"fmt"
 	msg "github.com/sorcix/irc"
 	"github.com/sorcix/irc/ctcp"
 	irc "maunium.net/go/libmauirc"
+	flag "maunium.net/go/mauflag"
 	"os"
 	"os/signal"
 	"strings"
@@ -28,18 +29,42 @@ import (
 	"time"
 )
 
-var ip = flag.String("address", "localhost", "The address to connect to.")
-var port = flag.Int("port", 6667, "The port to connect to.")
-var tls = flag.Bool("tls", false, "Set to enable TLS")
+var ip = flag.Make().ShortKey("a").LongKey("address").Usage("").String()
+var port = flag.Make().ShortKey("p").LongKey("port").Usage("").Uint16()
+var tls = flag.Make().ShortKey("s").LongKey("ssl").LongKey("tls").Bool()
+var wantHelp = flag.Make().ShortKey("h").LongKey("help").Bool()
+
+const help = `lmitest - A simple program to test libmauirc.
+
+Usage:
+  lmitest [-s] [-a IP-ADDRESS] [-p PORT]
+
+Help options:
+  -h, --help               Show this help page.
+
+Application options:
+  -a, --address=IP-ADDRESS The address to connect to.
+  -p, --port=PORT          The port to connect to.
+  -s, --ssl                Use to enable TLS connection.
+`
 
 func main() {
-	flag.Parse()
-	c := irc.Create("lmitest", "lmitest", irc.IPv4Address{IP: *ip, Port: uint16(*port)})
+	err := flag.Parse()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stdout, help)
+		os.Exit(1)
+	} else if *wantHelp {
+		fmt.Fprintln(os.Stdout, help)
+		os.Exit(0)
+	}
+
+	c := irc.Create("lmitest", "lmitest", irc.IPv4Address{IP: *ip, Port: *port})
 	c.SetRealName("libmauirc tester")
 	c.SetDebugWriter(os.Stdout)
 	c.SetUseTLS(*tls)
 
-	err := c.Connect()
+	err = c.Connect()
 	if err != nil {
 		panic(err)
 	}
