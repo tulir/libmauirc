@@ -103,12 +103,14 @@ func (c *ConnImpl) AddStdHandlers() {
 
 	c.AddHandler("PING", func(evt *irc.Message) {
 		c.Pong(evt.Trailing)
+		c.LastPingAt = time.Now().Unix()
 	})
 
 	c.AddHandler("PONG", func(evt *irc.Message) {
 		ns, _ := strconv.ParseInt(evt.Trailing, 10, 64)
 		delta := time.Duration(time.Now().UnixNano() - ns)
 		c.Debugfln("Lag: %v", delta)
+		c.Lag = delta.Nanoseconds()
 	})
 
 	c.AddHandler("CTCP_VERSION", func(evt *irc.Message) {

@@ -90,10 +90,11 @@ type Connection interface {
 // Connection contains for documentation on ConnImpl's functions.
 type ConnImpl struct {
 	sync.WaitGroup
-	PingFreq  time.Duration
-	KeepAlive time.Duration
-	Timeout   time.Duration
-	prevMsg   time.Time
+	PingFreq             time.Duration
+	KeepAlive            time.Duration
+	Timeout              time.Duration
+	AutoreconnectTimeout time.Duration
+	prevMsg              time.Time
 
 	Version       string
 	PreferredNick string
@@ -101,39 +102,44 @@ type ConnImpl struct {
 	User          string
 	RealName      string
 	QuitMsg       string
+	LastPingAt    int64
+	Lag           int64
 
 	handlers map[string][]Handler
 	Auth     []AuthHandler
 	Address  Address
 
-	DebugWriter io.Writer
-	stopped     bool
-	quit        bool
-	UseTLS      bool
-	TLSConfig   *tls.Config
-	socket      net.Conn
-	output      chan *irc.Message
-	errors      chan error
-	end         chan struct{}
+	DebugWriter   io.Writer
+	stopped       bool
+	quit          bool
+	UseTLS        bool
+	Autoreconnect bool
+	TLSConfig     *tls.Config
+	socket        net.Conn
+	output        chan *irc.Message
+	errors        chan error
+	end           chan struct{}
 }
 
 // Create an IRC connection with the given details.
 // By default, RealName is set to the same value as user.
 func Create(nick, user string, addr Address) Connection {
 	c := &ConnImpl{
-		Nick:          nick,
-		PreferredNick: nick,
-		User:          user,
-		RealName:      user,
-		Address:       addr,
-		Auth:          make([]AuthHandler, 0),
-		end:           make(chan struct{}),
-		handlers:      make(map[string][]Handler),
-		Version:       Version,
-		KeepAlive:     4 * time.Minute,
-		Timeout:       1 * time.Minute,
-		PingFreq:      15 * time.Minute,
-		QuitMsg:       Version,
+		Nick:                 nick,
+		PreferredNick:        nick,
+		User:                 user,
+		RealName:             user,
+		Address:              addr,
+		Auth:                 make([]AuthHandler, 0),
+		end:                  make(chan struct{}),
+		handlers:             make(map[string][]Handler),
+		Version:              Version,
+		KeepAlive:            4 * time.Minute,
+		AutoreconnectTimeout: 7 * time.Minute,
+		Autoreconnect:        true,
+		Timeout:              1 * time.Minute,
+		PingFreq:             15 * time.Minute,
+		QuitMsg:              Version,
 	}
 	c.AddStdHandlers()
 	return c
