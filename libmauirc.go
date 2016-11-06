@@ -206,7 +206,7 @@ func (c *ConnImpl) Disconnect() {
 		close(c.output)
 	}
 
-	c.Wait()
+	//c.Wait()
 	if c.socket != nil {
 		c.socket.Close()
 	}
