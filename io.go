@@ -94,7 +94,7 @@ func (c *ConnImpl) pingLoop() {
 	for {
 		select {
 		case <-mins.C:
-			if c.Autoreconnect && time.Since(time.Unix(c.LastPingAt, 0)) >= c.AutoreconnectTimeout {
+			if c.Autoreconnect && time.Since(c.prevMsg) >= c.AutoreconnectTimeout {
 				c.Disconnect()
 				mins.Stop()
 				pingfreq.Stop()

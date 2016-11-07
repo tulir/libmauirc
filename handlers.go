@@ -103,7 +103,6 @@ func (c *ConnImpl) AddStdHandlers() {
 
 	c.AddHandler("PING", func(evt *irc.Message) {
 		c.Pong(evt.Trailing)
-		c.LastPingAt = time.Now().Unix()
 	})
 
 	c.AddHandler("PONG", func(evt *irc.Message) {

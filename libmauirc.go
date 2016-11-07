@@ -102,7 +102,6 @@ type ConnImpl struct {
 	User          string
 	RealName      string
 	QuitMsg       string
-	LastPingAt    int64
 	Lag           int64
 
 	handlers map[string][]Handler
