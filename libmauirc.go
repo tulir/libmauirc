@@ -20,15 +20,16 @@ package libmauirc
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/sorcix/irc"
 	"io"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/sorcix/irc"
 )
 
 // Version is the IRC client version string
-var Version = "libmauirc 0.1"
+var Version = "libmauirc 0.2"
 
 // Debugger is something to send debug messages to
 type Debugger interface {
@@ -61,6 +62,8 @@ type Connectable interface {
 	// Connect to the server.
 	// An error will be returned if some settings are incorrect or if an error is received while connecting.
 	Connect() error
+	// Loop to automatically reconnect to the server.
+	Loop()
 	// Disconnect from the server.
 	Disconnect()
 	// Connected checks if the connection is active.
@@ -89,6 +92,7 @@ type Connection interface {
 // The functions here don't have separate documentation. See the documentation of the interfaces
 // Connection contains for documentation on ConnImpl's functions.
 type ConnImpl struct {
+	sync.Mutex
 	sync.WaitGroup
 	PingFreq             time.Duration
 	KeepAlive            time.Duration
@@ -108,16 +112,18 @@ type ConnImpl struct {
 	Auth     []AuthHandler
 	Address  Address
 
-	DebugWriter   io.Writer
-	stopped       bool
-	quit          bool
-	UseTLS        bool
-	Autoreconnect bool
-	TLSConfig     *tls.Config
-	socket        net.Conn
-	output        chan *irc.Message
-	errors        chan error
-	end           chan struct{}
+	DebugWriter      io.Writer
+	reconnectAttempt int
+	stopped          bool
+	quit             bool
+	UseTLS           bool
+	Autoreconnect    bool
+	TLSConfig        *tls.Config
+	socket           net.Conn
+	output           chan *irc.Message
+	errors           chan error
+	disconnected     chan error
+	end              chan interface{}
 }
 
 // Create an IRC connection with the given details.
@@ -130,7 +136,6 @@ func Create(nick, user string, addr Address) Connection {
 		RealName:             user,
 		Address:              addr,
 		Auth:                 make([]AuthHandler, 0),
-		end:                  make(chan struct{}),
 		handlers:             make(map[string][]Handler),
 		Version:              Version,
 		KeepAlive:            4 * time.Minute,
@@ -138,13 +143,16 @@ func Create(nick, user string, addr Address) Connection {
 		Autoreconnect:        true,
 		Timeout:              1 * time.Minute,
 		PingFreq:             15 * time.Minute,
+		reconnectAttempt:     1,
 		QuitMsg:              Version,
 	}
 	c.AddStdHandlers()
 	return c
 }
 
+// Connect - see Connection interface docs
 func (c *ConnImpl) Connect() error {
+	c.quit = false
 	c.stopped = true
 
 	if c.Address == nil {
@@ -172,8 +180,10 @@ func (c *ConnImpl) Connect() error {
 
 	c.stopped = false
 
+	c.end = make(chan interface{})
 	c.output = make(chan *irc.Message, 10)
 	c.errors = make(chan error, 2)
+	c.disconnected = make(chan error, 2)
 	c.Add(3)
 
 	go c.readLoop()
@@ -189,80 +199,126 @@ func (c *ConnImpl) Connect() error {
 	return nil
 }
 
+// Loop - see Connection interface docs
+func (c *ConnImpl) Loop() {
+	for !c.isQuitting() {
+		<-c.disconnected
+		if c.end != nil {
+			close(c.end)
+		}
+		c.Wait()
+		c.Debugfln("Disconnected from server")
+		for !c.isQuitting() && !c.Connected() {
+			c.Debugln("Trying to reconnect...")
+			if err := c.Connect(); err != nil {
+				c.Lock()
+				nextTime := time.Duration(15*c.reconnectAttempt) * time.Second
+				c.Debugfln("Trying again in %v", nextTime)
+				if c.reconnectAttempt < 20 {
+					c.reconnectAttempt++
+				}
+				c.Unlock()
+				time.Sleep(nextTime)
+			} else {
+				c.reconnectAttempt = 1
+				break
+			}
+		}
+	}
+	c.Debugln("Bye!")
+}
+
+// LocalAddr - see Connection interface docs
 func (c *ConnImpl) LocalAddr() net.Addr {
 	return c.socket.LocalAddr()
 }
 
+// Disconnect - see Connection interface docs
 func (c *ConnImpl) Disconnect() {
 	defer recover()
-	if c.end != nil {
-		close(c.end)
-	}
-
-	c.end = nil
-
+	c.end <- true
 	if c.output != nil {
 		close(c.output)
 	}
-
-	//c.Wait()
 	if c.socket != nil {
 		c.socket.Close()
 	}
-	c.socket = nil
-	c.errors <- ErrDisconnected
+	c.Wait()
+	c.stopped = true
+	c.disconnected <- ErrDisconnected
 }
 
+// Connected - see Connection interface docs
 func (c *ConnImpl) Connected() bool {
-	return !c.quit && !c.stopped
+	c.Lock()
+	defer c.Unlock()
+	return !c.stopped
 }
 
+func (c *ConnImpl) isQuitting() bool {
+	c.Lock()
+	defer c.Unlock()
+	return c.quit
+}
+
+// GetNick - see Data interface docs
 func (c *ConnImpl) GetNick() string {
 	return c.Nick
 }
 
+// GetPreferredNick - see Data interface docs
 func (c *ConnImpl) GetPreferredNick() string {
 	return c.PreferredNick
 }
 
+// SetQuitMessage - see Data interface docs
 func (c *ConnImpl) SetQuitMessage(msg string) {
 	c.QuitMsg = msg
 }
 
+// SetUseTLS - see Data interface docs
 func (c *ConnImpl) SetUseTLS(tls bool) {
 	c.UseTLS = tls
 }
 
+// SetRealName - see Data interface docs
 func (c *ConnImpl) SetRealName(realname string) {
 	c.RealName = realname
 }
 
+// SetVersion - see Data interface docs
 func (c *ConnImpl) SetVersion(version string) {
 	c.Version = version
 }
 
+// Errors - see ErrorStream interface docs
 func (c *ConnImpl) Errors() chan error {
 	return c.errors
 }
 
+// AddAuth - see Data interface docs
 func (c *ConnImpl) AddAuth(auth AuthHandler) {
 	c.Auth = append(c.Auth, auth)
 }
 
+// SetAddress - see Data interface docs
 func (c *ConnImpl) SetAddress(addr Address) {
 	c.Address = addr
 }
 
+// SetDebugWriter - see Debugger interface docs
 func (c *ConnImpl) SetDebugWriter(writer io.Writer) {
 	c.DebugWriter = writer
 }
 
+// Debugf - see Debugger interface docs
 func (c *ConnImpl) Debugf(msg string, args ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintf(c.DebugWriter, msg, args...)
 	}
 }
 
+// Debugfln - see Debugger interface docs
 func (c *ConnImpl) Debugfln(msg string, args ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintf(c.DebugWriter, msg, args...)
@@ -270,12 +326,14 @@ func (c *ConnImpl) Debugfln(msg string, args ...interface{}) {
 	}
 }
 
+// Debug - see Debugger interface docs
 func (c *ConnImpl) Debug(parts ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprint(c.DebugWriter, parts...)
 	}
 }
 
+// Debugln - see Debugger interface docs
 func (c *ConnImpl) Debugln(parts ...interface{}) {
 	if c.DebugWriter != nil {
 		fmt.Fprintln(c.DebugWriter, parts...)

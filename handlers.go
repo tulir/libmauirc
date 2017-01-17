@@ -19,11 +19,12 @@ package libmauirc
 
 import (
 	"fmt"
-	"github.com/sorcix/irc"
-	"github.com/sorcix/irc/ctcp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/sorcix/irc"
+	"github.com/sorcix/irc/ctcp"
 )
 
 // HandlerHandler is a handler that handles handlers

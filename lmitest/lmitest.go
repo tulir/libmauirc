@@ -18,44 +18,31 @@ package main
 import (
 	"bufio"
 	"fmt"
-	msg "github.com/sorcix/irc"
-	"github.com/sorcix/irc/ctcp"
-	irc "maunium.net/go/libmauirc"
-	flag "maunium.net/go/mauflag"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
+
+	msg "github.com/sorcix/irc"
+	"github.com/sorcix/irc/ctcp"
+	irc "maunium.net/go/libmauirc"
+	flag "maunium.net/go/mauflag"
 )
 
-var ip = flag.Make().ShortKey("a").LongKey("address").Usage("").String()
-var port = flag.Make().ShortKey("p").LongKey("port").Usage("").Uint16()
-var tls = flag.Make().ShortKey("s").LongKey("ssl").LongKey("tls").Bool()
-var wantHelp = flag.Make().ShortKey("h").LongKey("help").Bool()
-
-const help = `lmitest - A simple program to test libmauirc.
-
-Usage:
-  lmitest [-s] [-a IP-ADDRESS] [-p PORT]
-
-Help options:
-  -h, --help               Show this help page.
-
-Application options:
-  -a, --address=IP-ADDRESS The address to connect to.
-  -p, --port=PORT          The port to connect to.
-  -s, --ssl                Use to enable TLS connection.
-`
+var ip = flag.Make().ShortKey("a").LongKey("address").Usage("The address to connect to.").String()
+var port = flag.Make().ShortKey("p").LongKey("port").Usage("The port to connect to.").Uint16()
+var tls = flag.Make().ShortKey("s").LongKey("ssl").LongKey("tls").Usage("Whether or not to enable TLS.").Bool()
+var wantHelp, _ = flag.MakeHelpFlag()
 
 func main() {
 	err := flag.Parse()
+	flag.SetHelpTitles("lmitest - A simple program to test libmauirc.", "lmitest [-h] [-s] [-a IP ADDRESS] [-p PORT]")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		fmt.Fprintln(os.Stdout, help)
+		flag.PrintHelp()
 		os.Exit(1)
 	} else if *wantHelp {
-		fmt.Fprintln(os.Stdout, help)
+		flag.PrintHelp()
 		os.Exit(0)
 	}
 
@@ -69,19 +56,35 @@ func main() {
 		panic(err)
 	}
 
+	go c.Loop()
+
 	term := make(chan os.Signal, 1)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
+	usr1 := make(chan os.Signal, 1)
+	signal.Notify(usr1, syscall.SIGUSR1)
+	usr2 := make(chan os.Signal, 1)
+	signal.Notify(usr2, syscall.SIGUSR2)
 	go func() {
-		<-term
-		c.Debugln("\nInterrupt received...")
-		c.Quit()
-		time.Sleep(1 * time.Second)
-		os.Exit(0)
+		for {
+			select {
+			case <-usr1:
+				c.Debugln("Disconnecting...")
+				c.Disconnect()
+			case <-term:
+				c.Debugln("\nQuitting...")
+				c.Quit()
+				break
+			case <-usr2:
+				c.Debugln("Quitting...")
+				c.Quit()
+				break
+			}
+		}
 	}()
 
 	go func() {
 		err := <-c.Errors()
-		c.Debugln(err)
+		fmt.Fprintln(os.Stderr, "[Error]", err)
 	}()
 
 	reader := bufio.NewReader(os.Stdin)

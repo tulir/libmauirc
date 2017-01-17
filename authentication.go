@@ -19,6 +19,7 @@ package libmauirc
 
 import (
 	"fmt"
+
 	"github.com/sorcix/irc"
 )
 
@@ -33,6 +34,7 @@ type PasswordAuth struct {
 	Password string
 }
 
+// Do - See AuthHandler interface docs
 func (auth *PasswordAuth) Do(c *ConnImpl) {
 	c.Send(&irc.Message{
 		Command: irc.PASS,
@@ -45,6 +47,7 @@ type NickServAuth struct {
 	Password string
 }
 
+// Do - See AuthHandler interface docs
 func (auth *NickServAuth) Do(c *ConnImpl) {
 	c.Privmsg("NickServ", fmt.Sprintf("IDENTIFY %s", auth.Password))
 }

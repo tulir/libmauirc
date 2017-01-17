@@ -18,10 +18,11 @@
 package libmauirc
 
 import (
-	"github.com/sorcix/irc"
-	"github.com/sorcix/irc/ctcp"
 	"strconv"
 	"time"
+
+	"github.com/sorcix/irc"
+	"github.com/sorcix/irc/ctcp"
 )
 
 // Tunnel contains functions to wrap IRC commands
@@ -66,14 +67,19 @@ type Tunnel interface {
 	Quit()
 }
 
+// Send - See Tunnel interface docs
 func (c *ConnImpl) Send(msg *irc.Message) {
 	c.output <- msg
 }
 
+// Action - See Tunnel interface docs
+// Action - See Tunnel interface docs
 func (c *ConnImpl) Action(channel, msg string) {
 	c.Privmsg(channel, ctcp.Action(msg))
 }
 
+// Privmsg - See Tunnel interface docs
+// Privmsg - See Tunnel interface docs
 func (c *ConnImpl) Privmsg(channel, msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.PRIVMSG,
@@ -82,6 +88,7 @@ func (c *ConnImpl) Privmsg(channel, msg string) {
 	})
 }
 
+// Notice - See Tunnel interface docs
 func (c *ConnImpl) Notice(channel, msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.NOTICE,
@@ -90,6 +97,7 @@ func (c *ConnImpl) Notice(channel, msg string) {
 	})
 }
 
+// Away - See Tunnel interface docs
 func (c *ConnImpl) Away(msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.AWAY,
@@ -97,10 +105,12 @@ func (c *ConnImpl) Away(msg string) {
 	})
 }
 
+// RemoveAway - See Tunnel interface docs
 func (c *ConnImpl) RemoveAway() {
 	c.Away("")
 }
 
+// Invite - See Tunnel interface docs
 func (c *ConnImpl) Invite(user, ch string) {
 	c.Send(&irc.Message{
 		Command: irc.INVITE,
@@ -108,6 +118,7 @@ func (c *ConnImpl) Invite(user, ch string) {
 	})
 }
 
+// Kick - See Tunnel interface docs
 func (c *ConnImpl) Kick(ch, user, msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.KICK,
@@ -116,6 +127,7 @@ func (c *ConnImpl) Kick(ch, user, msg string) {
 	})
 }
 
+// Mode - See Tunnel interface docs
 func (c *ConnImpl) Mode(target, flags, args string) {
 	c.Send(&irc.Message{
 		Command: irc.MODE,
@@ -123,6 +135,7 @@ func (c *ConnImpl) Mode(target, flags, args string) {
 	})
 }
 
+// Oper - See Tunnel interface docs
 func (c *ConnImpl) Oper(username, password string) {
 	c.Send(&irc.Message{
 		Command: irc.OPER,
@@ -130,6 +143,7 @@ func (c *ConnImpl) Oper(username, password string) {
 	})
 }
 
+// SetNick - See Tunnel interface docs
 func (c *ConnImpl) SetNick(nick string) {
 	c.PreferredNick = nick
 	c.Nick = nick
@@ -139,6 +153,7 @@ func (c *ConnImpl) SetNick(nick string) {
 	})
 }
 
+// Join - See Tunnel interface docs
 func (c *ConnImpl) Join(chs string, keys string) {
 	c.Send(&irc.Message{
 		Command: irc.JOIN,
@@ -146,6 +161,7 @@ func (c *ConnImpl) Join(chs string, keys string) {
 	})
 }
 
+// Part - See Tunnel interface docs
 func (c *ConnImpl) Part(ch, msg string) {
 	c.Send(&irc.Message{
 		Command:  irc.PART,
@@ -154,12 +170,14 @@ func (c *ConnImpl) Part(ch, msg string) {
 	})
 }
 
+// List - See Tunnel interface docs
 func (c *ConnImpl) List() {
 	c.Send(&irc.Message{
 		Command: irc.LIST,
 	})
 }
 
+// Topic - See Tunnel interface docs
 func (c *ConnImpl) Topic(ch, topic string) {
 	c.Send(&irc.Message{
 		Command:  irc.TOPIC,
@@ -168,6 +186,7 @@ func (c *ConnImpl) Topic(ch, topic string) {
 	})
 }
 
+// Whois - See Tunnel interface docs
 func (c *ConnImpl) Whois(name string) {
 	c.Send(&irc.Message{
 		Command: irc.WHOIS,
@@ -175,6 +194,7 @@ func (c *ConnImpl) Whois(name string) {
 	})
 }
 
+// Whowas - See Tunnel interface docs
 func (c *ConnImpl) Whowas(name string) {
 	c.Send(&irc.Message{
 		Command: irc.WHOWAS,
@@ -182,6 +202,7 @@ func (c *ConnImpl) Whowas(name string) {
 	})
 }
 
+// Who - See Tunnel interface docs
 func (c *ConnImpl) Who(name string, op bool) {
 	if op {
 		c.Send(&irc.Message{
@@ -196,16 +217,19 @@ func (c *ConnImpl) Who(name string, op bool) {
 	}
 }
 
+// Quit - See Tunnel interface docs
 func (c *ConnImpl) Quit() {
 	c.Send(&irc.Message{
 		Command:  irc.QUIT,
 		Trailing: c.QuitMsg,
 	})
-	c.stopped = true
+	c.Lock()
 	c.quit = true
+	c.Unlock()
 }
 
 // SendUser sends the USER message to the server
+// SendUser - See Tunnel interface docs
 func (c *ConnImpl) SendUser() {
 	c.Send(&irc.Message{
 		Command:  irc.USER,
@@ -215,6 +239,7 @@ func (c *ConnImpl) SendUser() {
 }
 
 // Ping the IRC server
+// Ping - See Tunnel interface docs
 func (c *ConnImpl) Ping() {
 	c.Send(&irc.Message{
 		Command: irc.PING,

@@ -20,9 +20,10 @@ package libmauirc
 import (
 	"bufio"
 	"bytes"
-	"github.com/sorcix/irc"
 	"strings"
 	"time"
+
+	"github.com/sorcix/irc"
 )
 
 func (c *ConnImpl) readLoop() {
@@ -51,7 +52,13 @@ func (c *ConnImpl) readLoop() {
 
 			msg = strings.TrimSpace(msg)
 			c.Debugln("<--", msg)
+			c.Lock()
 			c.prevMsg = time.Now()
+			c.Unlock()
+			if strings.HasPrefix(msg, "ERROR") {
+				go c.Disconnect()
+				return
+			}
 			c.RunHandlers(irc.ParseMessage(msg))
 		}
 	}
@@ -61,8 +68,6 @@ func (c *ConnImpl) writeLoop() {
 	defer c.Done()
 	for {
 		select {
-		case <-c.end:
-			return
 		case b, ok := <-c.output:
 			if !ok || b == nil || c.socket == nil {
 				return
@@ -83,6 +88,8 @@ func (c *ConnImpl) writeLoop() {
 				c.errors <- err
 				return
 			}
+		case <-c.end:
+			return
 		}
 	}
 }
@@ -91,27 +98,25 @@ func (c *ConnImpl) pingLoop() {
 	defer c.Done()
 	mins := time.NewTicker(1 * time.Minute)
 	pingfreq := time.NewTicker(c.PingFreq)
+	defer mins.Stop()
+	defer pingfreq.Stop()
 	for {
 		select {
 		case <-mins.C:
-			if c.Autoreconnect && time.Since(c.prevMsg) >= c.AutoreconnectTimeout {
-				c.Disconnect()
-				mins.Stop()
-				pingfreq.Stop()
-				go c.Connect()
-				return
-			} else if time.Since(c.prevMsg) >= c.KeepAlive {
+			c.Lock()
+			if time.Since(c.prevMsg) >= c.KeepAlive {
 				c.Ping()
 			}
+			c.Unlock()
 		case <-pingfreq.C:
 			c.Ping()
+			c.Lock()
 			if c.Nick != c.PreferredNick {
 				c.Nick = c.PreferredNick
 				c.SetNick(c.PreferredNick)
 			}
+			c.Unlock()
 		case <-c.end:
-			mins.Stop()
-			pingfreq.Stop()
 			return
 		}
 	}
